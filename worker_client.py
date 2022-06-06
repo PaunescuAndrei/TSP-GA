@@ -226,31 +226,6 @@ class GeneticAlgorithm():
 
         return Elite_Pop.copy() + Old_Population.copy()
 
-    def Migration2(self,Population,NewPopulation,Percentage,Coordinates,cache_dict):
-        eval_list = []
-        pop_list = copy.deepcopy(Population)
-        Population_Size = len(Population)
-
-        eval_list.clear()
-        for Chromosome in NewPopulation:
-            eval_list.append(self.Evaluate(Chromosome,Coordinates,cache_dict))
-
-        eval_max = max(eval_list)
-            
-        for value in range(len(eval_list)):
-            eval_list[value] = eval_max-eval_list[value] + 1
-
-        Elite_Numbers = int(math.floor(Percentage*Population_Size)) + 1
-        positions_to_replace = random.sample(range(Population_Size), Elite_Numbers)
-
-        for i in positions_to_replace:
-            best_pos = eval_list.index(max(eval_list)) 
-            pop_list[i] = NewPopulation[best_pos].copy()
-            del eval_list[best_pos]
-            del NewPopulation[best_pos]
-
-        return pop_list
-
     def initConnection(self,ip,port):
         self.conn = Client((ip, port), authkey=b'secret password')
         self.conn.send(('Connect',self.id))
