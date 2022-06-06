@@ -105,52 +105,52 @@ class GeneticAlgorithm():
             if j < i:
                 i,j = j,i
 
-            a = Parents[C1_pos][1]
-            b = Parents[C2_pos][1]
+            Parent_A = Parents[C1_pos][1]
+            Parent_B = Parents[C2_pos][1]
 
-            bb = [None] * i + a[i:j] + [None] * (len(a)-j)
-            aa = [None] * i + b[i:j] + [None] * (len(a)-j)
+            Child_B = [None] * i + Parent_A[i:j] + [None] * (len(Parent_A)-j)
+            Child_A = [None] * i + Parent_B[i:j] + [None] * (len(Parent_A)-j)
 
-            for z in range(0,i):
-                if a[z] not in b[i:j]:
-                    aa[z] = a[z]
+            for k in range(0,i):
+                if Parent_A[k] not in Parent_B[i:j]:
+                    Child_A[k] = Parent_A[k]
 
-            for z in range(j,len(a)):
-                if a[z] not in b[i:j]:
-                    aa[z] = a[z]
+            for k in range(j,len(Parent_A)):
+                if Parent_A[k] not in Parent_B[i:j]:
+                    Child_A[k] = Parent_A[k]
 
-            for z in range(0,i):
-                if b[z] not in a[i:j]:
-                    bb[z] = b[z]
+            for k in range(0,i):
+                if Parent_B[k] not in Parent_A[i:j]:
+                    Child_B[k] = Parent_B[k]
 
-            for z in range(j,len(b)):
-                if b[z] not in a[i:j]:
-                    bb[z] = b[z]
+            for k in range(j,len(Parent_B)):
+                if Parent_B[k] not in Parent_A[i:j]:
+                    Child_B[k] = Parent_B[k]
 
-            for z in range(len(a)):
-                if(aa[z] == None):
-                    tmp = a[z]
+            for k in range(len(Parent_A)):
+                if(Child_A[k] == None):
+                    tmp = Parent_A[k]
                     while True:
-                        value = a[i:j][b[i:j].index(tmp)]
-                        if(value in b[i:j]):
+                        value = Parent_A[i:j][Parent_B[i:j].index(tmp)]
+                        if(value in Parent_B[i:j]):
                             tmp = value
                         else:
-                            aa[z] = value
+                            Child_A[k] = value
                             break
 
-            for z in range(len(b)):
-                if(bb[z] == None):
-                    tmp = b[z]
+            for k in range(len(Parent_B)):
+                if(Child_B[k] == None):
+                    tmp = Parent_B[k]
                     while True:
-                        value = b[i:j][a[i:j].index(tmp)]
-                        if(value in a[i:j]):
+                        value = Parent_B[i:j][Parent_A[i:j].index(tmp)]
+                        if(value in Parent_A[i:j]):
                             tmp = value
                         else:
-                            bb[z] = value
+                            Child_B[k] = value
                             break
 
-            Population[Parents[C1_pos][0]] = aa
-            Population[Parents[C2_pos][0]] = bb
+            Population[Parents[C1_pos][0]] = Child_A
+            Population[Parents[C2_pos][0]] = Child_B
 
             if(C1_pos > C2_pos):
                 del Parents[C1_pos]
