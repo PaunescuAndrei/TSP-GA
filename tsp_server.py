@@ -14,8 +14,13 @@ import queue
 import time
 import socket
 import datetime
+import numpy as np
 from qtui.MainWindow import Ui_MainWindow
-from qtui import SwitchInstance
+import qtui.SwitchInstance
+
+BENCHMARK_MODE = False
+BENCHMARK_TIME = 30
+BENCHMARK_RUNS = 10
 
 def extract_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -67,6 +72,7 @@ class GeneticAlgorithmThread(Thread):
         self.workQueue = queue.LifoQueue()
         self.running = False
         self.starttime = None
+        self.instance_date = datetime.datetime.now()
         self.newfile = None
         self.newoptim = None
 
@@ -74,6 +80,7 @@ class GeneticAlgorithmThread(Thread):
         self.newfile = path
         self.newoptim = optim
         self.starttime = datetime.datetime.now()
+        self.instance_date = datetime.datetime.now()
 
     def stop_ga(self):
         self.running = False
@@ -205,8 +212,8 @@ class GeneticAlgorithmThread(Thread):
                 self.newoptim = None
             elif not self.workQueue.empty():
                 msgdata,ip = self.workQueue.get()
-                msg,id,tspfile,pop = msgdata 
-                if(tspfile == self.File):
+                msg,id,tspfile,pop,instance_date = msgdata 
+                if(tspfile == self.File and instance_date == self.instance_date):
                     bestpop = self.BestSoFar(pop,self.Coordinates,self.mydict).copy()
                     bestpop_value = self.Evaluate(bestpop,self.Coordinates,self.mydict)
                     self.updatePopulation(pop,id,ip[0])
@@ -246,12 +253,13 @@ class WorkerListener(Thread):
         listener = Listener(address=(extract_ip(), 25565), authkey=b'secret password')
 
         def getWork():
-            p = (self.App.GA.Population_Size, self.App.GA.Mutation_Probability, self.App.GA.Crossover_Probability, self.App.GA.Elite_Percent, self.App.GA.Method, self.App.GA.Selection_Probability,self.App.GA.Migration_Percent,self.App.GA.File,self.App.GA.Optimal_Solution)
+            p = (self.App.GA.Population_Size, self.App.GA.Mutation_Probability, self.App.GA.Crossover_Probability, self.App.GA.Elite_Percent, self.App.GA.Method, self.App.GA.Selection_Probability,self.App.GA.Migration_Percent,self.App.GA.File,self.App.GA.instance_date,self.App.GA.Optimal_Solution)
             return (p,(self.App.GA.Chromosome_Size,self.App.GA.Coordinates))
 
         def serviceConnection(conn,id):
             while not conn.closed:
                 try:
+                    self.connections[id] = conn
                     msg = conn.recv()
                     if msg[0] == 'GetWork':
                         self.App.logMessageSignal.emit(f"{time.strftime('[%d/%m/%Y , %H:%M:%S]')} Work request from {msg[1]} ({listener.last_accepted[0]}:{listener.last_accepted[1]}).")
@@ -262,7 +270,7 @@ class WorkerListener(Thread):
                     if msg[0] == 'UpdatePopulation':
                         self.App.logMessageSignal.emit(f"{time.strftime('[%d/%m/%Y , %H:%M:%S]')} Update Population request from {msg[1]} ({listener.last_accepted[0]}:{listener.last_accepted[1]}).")
                         if(self.App.GA.running):
-                            if(msg[2] == self.App.GA.File):
+                            if(msg[2] == self.App.GA.File and msg[4] == self.App.GA.instance_date):
                                 threading.Thread(target=self.sendPopulation, args=(conn,msg[1],("Migration",self.App.GA.File,self.App.GA.Population),listener.last_accepted[0],listener.last_accepted[1],)).start()
                                 self.App.GA.workQueue.put((msg,listener.last_accepted))
                             else:
@@ -275,10 +283,10 @@ class WorkerListener(Thread):
                 except (ConnectionResetError, OSError, EOFError):
                     conn.close()
                     break
+            if conn.closed:
                 with self.data_lock:
                     if id in self.connections:
                         del self.connections[id]
-            if conn.closed:
                 self.App.deleteContributorsSignal.emit(id)
 
         while running:
@@ -299,7 +307,7 @@ class WorkerListener(Thread):
             except (multiprocessing.context.AuthenticationError, OSError, EOFError):
                 pass
 
-class switchInstanceDialog(QDialog,SwitchInstance.Ui_Dialog):
+class switchInstanceDialog(QDialog,qtui.SwitchInstance.Ui_Dialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -326,10 +334,15 @@ class MainWindow(QMainWindow,Ui_MainWindow):
         self.switchButton.clicked.connect(self.switchInstanceButton)
         self.exportButton.clicked.connect(self.exportSolution)
         self.logsqueue = queue.Queue() 
+        self.benchmark_runs = []
+        self.benchmark_run = [None]*BENCHMARK_TIME
 
         timer = QTimer(self)
         timer.timeout.connect(self.updateGraph)
-        timer.setInterval(2000)  
+        if BENCHMARK_MODE:
+            timer.setInterval(200)  
+        else:
+            timer.setInterval(2000)  
         timer.start()
 
         timer2 = QTimer(self)
@@ -339,7 +352,10 @@ class MainWindow(QMainWindow,Ui_MainWindow):
 
         timer3 = QTimer(self)
         timer3.timeout.connect(self.updateTimeElapsed)
-        timer3.setInterval(1000)  
+        if BENCHMARK_MODE:
+            timer3.setInterval(200)  
+        else:
+            timer3.setInterval(1000)  
         timer3.start()
 
     def updateFile(self):
@@ -355,6 +371,28 @@ class MainWindow(QMainWindow,Ui_MainWindow):
     def updateTimeElapsed(self):
         if(self.App.GA.running and self.App.GA.starttime):
             elapsed_seconds = (datetime.datetime.now() - self.App.GA.starttime).total_seconds()
+            if BENCHMARK_MODE:
+                while(self.App.mainWindow.current_best_value.text() == "None"):
+                    Event().wait(timeout=0.100)
+                    self.App.GA.starttime = datetime.datetime.now()
+                if(elapsed_seconds <= BENCHMARK_TIME):
+                    self.benchmark_run[int(elapsed_seconds)] = int(self.App.mainWindow.current_best_value.text())
+                else:
+                    self.benchmark_runs.append(self.benchmark_run.copy())
+                    self.benchmark_run = [None]*BENCHMARK_TIME
+                    if(len(self.benchmark_runs) == BENCHMARK_RUNS):
+                        self.App.GA.stop_ga()
+                        arr = np.array(self.benchmark_runs)
+                        results = list(np.average(arr,axis=0))
+                        with open('benchmark.txt','a+') as f:
+                            f.write(f"{self.App.GA.File} , {len(self.App.WL.connections)} , {str(results)}\n")
+                        self.benchmark_runs.clear()
+                    else:
+                        self.App.GA.switchInstance(self.App.GA.File,self.App.GA.Optimal_Solution)
+                        while(self.App.GA.newfile):
+                            Event().wait(timeout=0.100)
+                        self.App.GA.starttime = datetime.datetime.now()
+                    print(len(self.benchmark_runs))
             h = int(elapsed_seconds // 3600)
             m = int(elapsed_seconds % 3600 // 60)
             s = int(elapsed_seconds % 60)
@@ -365,15 +403,16 @@ class MainWindow(QMainWindow,Ui_MainWindow):
             if(self.oldBest != self.App.GA.Best):
                 val = self.App.GA.Evaluate(self.App.GA.Best,self.App.GA.Coordinates,self.App.GA.mydict)
                 self.current_best_value.setText(str(val))
-                if self.plotitems:
-                    for j in range(len(self.App.GA.Best)-1):
-                        self.plotitems[j].setData([self.App.GA.Coordinates[self.App.GA.Best[j]][0],self.App.GA.Coordinates[self.App.GA.Best[j+1]][0]], [self.App.GA.Coordinates[self.App.GA.Best[j]][1],self.App.GA.Coordinates[self.App.GA.Best[j+1]][1]], symbol ='x', symbolPen ='g', symbolBrush = 0.2)
-                    self.plotitems[-1].setData([self.App.GA.Coordinates[self.App.GA.Best[len(self.App.GA.Best)-1]][0],self.App.GA.Coordinates[self.App.GA.Best[0]][0]], [self.App.GA.Coordinates[self.App.GA.Best[len(self.App.GA.Best)-1]][1],self.App.GA.Coordinates[self.App.GA.Best[0]][1]], symbol ='x', symbolPen ='g', symbolBrush = 0.2)
-                else:
-                    self.plotitems = []
-                    for j in range(len(self.App.GA.Best)-1):
-                        self.plotitems.append(self.graphPlot.plot([self.App.GA.Coordinates[self.App.GA.Best[j]][0],self.App.GA.Coordinates[self.App.GA.Best[j+1]][0]], [self.App.GA.Coordinates[self.App.GA.Best[j]][1],self.App.GA.Coordinates[self.App.GA.Best[j+1]][1]], symbol ='x', symbolPen ='g', symbolBrush = 0.2))
-                    self.plotitems.append(self.graphPlot.plot([self.App.GA.Coordinates[self.App.GA.Best[len(self.App.GA.Best)-1]][0],self.App.GA.Coordinates[self.App.GA.Best[0]][0]], [self.App.GA.Coordinates[self.App.GA.Best[len(self.App.GA.Best)-1]][1],self.App.GA.Coordinates[self.App.GA.Best[0]][1]], symbol ='x', symbolPen ='g', symbolBrush = 0.2))
+                if(not BENCHMARK_MODE):
+                    if self.plotitems:
+                        for j in range(len(self.App.GA.Best)-1):
+                            self.plotitems[j].setData([self.App.GA.Coordinates[self.App.GA.Best[j]][0],self.App.GA.Coordinates[self.App.GA.Best[j+1]][0]], [self.App.GA.Coordinates[self.App.GA.Best[j]][1],self.App.GA.Coordinates[self.App.GA.Best[j+1]][1]], symbol ='x', symbolPen ='g', symbolBrush = 0.2)
+                        self.plotitems[-1].setData([self.App.GA.Coordinates[self.App.GA.Best[len(self.App.GA.Best)-1]][0],self.App.GA.Coordinates[self.App.GA.Best[0]][0]], [self.App.GA.Coordinates[self.App.GA.Best[len(self.App.GA.Best)-1]][1],self.App.GA.Coordinates[self.App.GA.Best[0]][1]], symbol ='x', symbolPen ='g', symbolBrush = 0.2)
+                    else:
+                        self.plotitems = []
+                        for j in range(len(self.App.GA.Best)-1):
+                            self.plotitems.append(self.graphPlot.plot([self.App.GA.Coordinates[self.App.GA.Best[j]][0],self.App.GA.Coordinates[self.App.GA.Best[j+1]][0]], [self.App.GA.Coordinates[self.App.GA.Best[j]][1],self.App.GA.Coordinates[self.App.GA.Best[j+1]][1]], symbol ='x', symbolPen ='g', symbolBrush = 0.2))
+                        self.plotitems.append(self.graphPlot.plot([self.App.GA.Coordinates[self.App.GA.Best[len(self.App.GA.Best)-1]][0],self.App.GA.Coordinates[self.App.GA.Best[0]][0]], [self.App.GA.Coordinates[self.App.GA.Best[len(self.App.GA.Best)-1]][1],self.App.GA.Coordinates[self.App.GA.Best[0]][1]], symbol ='x', symbolPen ='g', symbolBrush = 0.2))
                 self.oldBest = self.App.GA.Best
 
     def updateMessages(self):

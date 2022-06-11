@@ -10,7 +10,7 @@ def init_worker():
 if (__name__ == '__main__'):
 
     def driver_func():
-        PROCESSES = 3
+        PROCESSES = 2
         workers = []
         for i in range(PROCESSES):
             workers.append(GeneticAlgorithm(id = str(uuid.uuid4())))

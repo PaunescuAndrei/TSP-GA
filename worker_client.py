@@ -239,9 +239,9 @@ class GeneticAlgorithm():
             self.running = False
         return None,(None,None)
 
-    def updatePopulation(self,Population,Migration_Percent,Coordinates,cache_dict,last=False):
+    def updatePopulation(self,Population,Migration_Percent,Coordinates,instance_date,cache_dict,last=False):
         try:
-            self.conn.send(('UpdatePopulation',self.id,self.file,Population))
+            self.conn.send(('UpdatePopulation',self.id,self.file,Population,instance_date))
             msg = self.conn.recv() 
             if msg[0] == 'Migration':
                 return self.Migration(Population,msg[2],Migration_Percent,Coordinates,cache_dict)
@@ -265,9 +265,9 @@ class GeneticAlgorithm():
                 self.file = p[7]
                 self.GA(*p,Chromosome_Size=Chromosome_Size,Coordinates=Coordinates,printresults=printresults)
             # Event().wait(timeout=5)
-            time.sleep(5)
+            time.sleep(1)
 
-    def GA(self, Population_Size, Mutation_Probability, Crossover_Probability, Elite_Percent, Method, Selection_Probability,Migration_Percent,File,Optimal_Solution,Chromosome_Size = None,Coordinates = None,printresults=True):
+    def GA(self, Population_Size, Mutation_Probability, Crossover_Probability, Elite_Percent, Method, Selection_Probability,Migration_Percent,File,Instance_Date,Optimal_Solution,Chromosome_Size = None,Coordinates = None,printresults=True):
         self.running = True
 
         if(not Chromosome_Size or not Coordinates):
@@ -330,13 +330,13 @@ class GeneticAlgorithm():
                 print("____________________________________________________")
 
             if (self.Evaluate(Best,Coordinates,cache_dict) == Optimal_Solution):
-                self.updatePopulation(Population,Migration_Percent,Coordinates,cache_dict)
+                self.updatePopulation(Population,Migration_Percent,Coordinates,Instance_Date,cache_dict)
                 return Best  
             elif self.Evaluate(BestPopulation,Coordinates,cache_dict) < self.Evaluate(Best,Coordinates,cache_dict):
-                Population = self.updatePopulation(Population,Migration_Percent,Coordinates,cache_dict)
+                Population = self.updatePopulation(Population,Migration_Percent,Coordinates,Instance_Date,cache_dict)
                 Best = self.BestSoFar(Population, Coordinates,cache_dict).copy()
             elif i != 0 and (i % 100) == 0:
-                Population = self.updatePopulation(Population,Migration_Percent,Coordinates,cache_dict)
+                Population = self.updatePopulation(Population,Migration_Percent,Coordinates,Instance_Date,cache_dict)
                 Best = self.BestSoFar(Population, Coordinates,cache_dict).copy()
             i += 1 
         return Best
