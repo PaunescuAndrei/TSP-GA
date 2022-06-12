@@ -277,7 +277,7 @@ class GeneticAlgorithm():
         cache_dict = {}
 
         Best = self.BestSoFar(Population,Coordinates,cache_dict).copy()
-        BestPopulation2 = Best.copy()
+        BestInvididualOld = Best.copy()
 
         Mutation_Default = Mutation_Probability
         Crossover_Default = Crossover_Probability
@@ -291,7 +291,7 @@ class GeneticAlgorithm():
             Population = self.Partially_Mapped_Crossover(Population,Population_Size,Chromosome_Size,Crossover_Probability)
             Population = self.Mutate(Population, Mutation_Probability,Chromosome_Size)
             Population = self.Select_Tournament(Population,Population_Size,Coordinates,Elite_Percent,Selection_Probability,cache_dict)
-            BestPopulation = self.BestSoFar(Population, Coordinates,cache_dict).copy()
+            BestInvididual = self.BestSoFar(Population, Coordinates,cache_dict).copy()
 
             if Method == True:
                 if count2 == 80:
@@ -308,10 +308,10 @@ class GeneticAlgorithm():
                     trigger = False
                     count = 0
 
-            if (BestPopulation == BestPopulation2):
+            if (BestInvididual == BestInvididualOld):
                 count2 = count2 + 1
             else:
-                BestPopulation2 = BestPopulation.copy()
+                BestInvididualOld = BestInvididual.copy()
                 count2 = 0
                 
             if(printresults):
@@ -323,7 +323,7 @@ class GeneticAlgorithm():
                 print(Crossover_Probability)
                 print(i, end="        ")
                 print("Best this generation:", end = " ")
-                print(self.Evaluate(BestPopulation,Coordinates,cache_dict))
+                print(self.Evaluate(BestInvididual,Coordinates,cache_dict))
                 print(i, end="        ")
                 print("Best so far:", end = " ")
                 print(self.Evaluate(Best,Coordinates,cache_dict))
@@ -332,7 +332,7 @@ class GeneticAlgorithm():
             if (self.Evaluate(Best,Coordinates,cache_dict) == Optimal_Solution):
                 self.updatePopulation(Population,Migration_Percent,Coordinates,Instance_Date,cache_dict)
                 return Best  
-            elif self.Evaluate(BestPopulation,Coordinates,cache_dict) < self.Evaluate(Best,Coordinates,cache_dict):
+            elif self.Evaluate(BestInvididual,Coordinates,cache_dict) < self.Evaluate(Best,Coordinates,cache_dict):
                 Population = self.updatePopulation(Population,Migration_Percent,Coordinates,Instance_Date,cache_dict)
                 Best = self.BestSoFar(Population, Coordinates,cache_dict).copy()
             elif i != 0 and (i % 100) == 0:

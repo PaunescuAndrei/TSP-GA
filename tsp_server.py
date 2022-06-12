@@ -18,8 +18,8 @@ import numpy as np
 from qtui.MainWindow import Ui_MainWindow
 import qtui.SwitchInstance
 
-BENCHMARK_MODE = False
-BENCHMARK_TIME = 30
+BENCHMARK_MODE = True
+BENCHMARK_TIME = 60
 BENCHMARK_RUNS = 10
 
 def extract_ip():
