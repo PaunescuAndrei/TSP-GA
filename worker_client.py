@@ -294,7 +294,7 @@ class GeneticAlgorithm():
             BestInvididual = self.BestSoFar(Population, Coordinates,cache_dict).copy()
 
             if Method == True:
-                if count2 == 80:
+                if count2 == 50:
                     Mutation_Probability = Mutation_Default * 3
                     Crossover_Probability = Crossover_Default * 1.5
                     trigger = True
@@ -335,7 +335,7 @@ class GeneticAlgorithm():
             elif self.Evaluate(BestInvididual,Coordinates,cache_dict) < self.Evaluate(Best,Coordinates,cache_dict):
                 Population = self.updatePopulation(Population,Migration_Percent,Coordinates,Instance_Date,cache_dict)
                 Best = self.BestSoFar(Population, Coordinates,cache_dict).copy()
-            elif i != 0 and (i % 100) == 0:
+            elif i != 0 and (i % 50) == 0:
                 Population = self.updatePopulation(Population,Migration_Percent,Coordinates,Instance_Date,cache_dict)
                 Best = self.BestSoFar(Population, Coordinates,cache_dict).copy()
             i += 1 
