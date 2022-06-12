@@ -227,8 +227,12 @@ class GeneticAlgorithm():
         return Elite_Pop.copy() + Old_Population.copy()
 
     def initConnection(self,ip,port):
-        self.conn = Client((ip, port), authkey=b'secret password')
-        self.conn.send(('Connect',self.id))
+        try:
+            self.conn = Client((ip, port), authkey=b'secret password')
+            self.conn.send(('Connect',self.id))
+        except (ConnectionRefusedError, ConnectionResetError ,TimeoutError):
+            time.sleep(5)
+            self.initConnection(ip,port)
 
     def getWork(self):
         self.conn.send(('GetWork',self.id))
@@ -265,7 +269,7 @@ class GeneticAlgorithm():
                 self.file = p[7]
                 self.GA(*p,Chromosome_Size=Chromosome_Size,Coordinates=Coordinates,printresults=printresults)
             # Event().wait(timeout=5)
-            time.sleep(1)
+            time.sleep(2)
 
     def GA(self, Population_Size, Mutation_Probability, Crossover_Probability, Elite_Percent, Method, Selection_Probability,Migration_Percent,File,Instance_Date,Optimal_Solution,Chromosome_Size = None,Coordinates = None,printresults=True):
         self.running = True

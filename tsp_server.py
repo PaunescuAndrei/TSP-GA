@@ -18,8 +18,8 @@ import numpy as np
 from qtui.MainWindow import Ui_MainWindow
 import qtui.SwitchInstance
 
-BENCHMARK_MODE = False
-BENCHMARK_TIME = 120
+BENCHMARK_MODE = True
+BENCHMARK_TIME = 60
 BENCHMARK_RUNS = 5
 
 def extract_ip():
@@ -55,20 +55,20 @@ class GeneticAlgorithmThread(Thread):
         self.Chromosome_Size = None
         self.Coordinates = None
         self.Population_Size = 500
-        self.Mutation_Probability = 0.05
+        self.Mutation_Probability = 0.12
         self.Crossover_Probability = 0.33
         self.Elite_Percent = 0.10
         self.Method = True
         self.Selection_Probability = 0.6
         self.Migration_Percent = 0.15
-        self.File = "data\\eil101.tsp"
+        self.File = "data\\berlin52.tsp"
         #dj38.tsp 6656
         #berlin52.tsp 7542
         #qa194.tsp 9352
         #wi29.tsp 27603
         #eil105.tsp 629
         self.Best = None
-        self.Optimal_Solution = 629
+        self.Optimal_Solution = 7542
         self.mydict = {}
         self.workQueue = queue.LifoQueue()
         self.running = False
@@ -386,7 +386,7 @@ class MainWindow(QMainWindow,Ui_MainWindow):
                         arr = np.array(self.benchmark_runs)
                         results = list(np.average(arr,axis=0))
                         with open('benchmark.txt','a+') as f:
-                            f.write(f"{self.App.GA.File} , {len(self.App.WL.connections)} , {str(results)}\n")
+                            f.write(f"{self.App.GA.File} | {len(self.App.WL.connections)} | {str(results)}\n")
                         self.benchmark_runs.clear()
                     else:
                         self.App.GA.switchInstance(self.App.GA.File,self.App.GA.Optimal_Solution)
