@@ -1,0 +1,47 @@
+\chapter*{Introduction} 
+\addcontentsline{toc}{chapter}{Introduction}
+
+\section*{Context}
+\addcontentsline{toc}{section}{Context}
+
+In the past, it was believed that the best way to improve computer performance was by creating more efficient and faster processors. Over time, this idea has been changed by the arrival of parallel processing.
+\par
+Nowadays, parallel computing is becoming very popular, with processors having more and more cores and threads. Among the driving forces that have facilitated this rise in popularity is the rapid improvement in the availability of commodity high performance components for computers and networks.
+\par
+Parallel algorithms are usually easily scalable, and that has led to their rapid adoption by big companies and projects, which has fueled their increase in popularity even more. Scalable computing clusters have become the standard platform for high-performance and large scale computing. The main attractiveness of these kinds of systems is that they are built using low-cost, affordable hardware and can be tuned to available budget and computational needs.
+\par
+A genetic algorithm is a heuristic-based method used for finding optimized solutions for search problems based on natural selection and evolutionary biology.
+\par
+In this thesis, I aim to implement and optimize a parallel genetic algorithm for the traveling salesman problem running on a cluster of computers and analyze the results compared to a sequential algorithm.
+
+\pagebreak
+\section*{Motivation}
+\addcontentsline{toc}{section}{Motivation}
+
+Because of the ever increasing popularity of parallel computing and the big gains in both performance and efficiency, I feel like there should be a bigger focus on parallel algorithms during the first years of college. There are big advantages to be gained in speed, performance, and time by implementing parallel algorithms for your applications.
+\par
+I chose to adapt a genetic algorithm to a parallel one because I find the idea of simulating the concept of natural selection fascinating.
+With this thesis, I aim to improve and optimize a genetic algorithm by implementing a parallel processing algorithm on it and documenting my results and experiences.
+
+\pagebreak
+\section*{Contributions}
+\addcontentsline{toc}{section}{Contributions}
+
+The project consists of two applications: a server and a client. The server is responsible for the communication between all the clients and provides a graphical interface from which to send commands to all the clients and see the progress of the algorithm. The client connects to the server and receives commands for work and is able to synchronize with all the other clients through the server.
+\newline
+The actions that are available through the server:
+\begin{itemize}
+  \item You can visualize the solution on a graph.
+  \item Start\textbackslash Stop the work on all clients connected.
+  \item Switch the instance of the problem to be solved by the clients.
+  \item Export the solution.
+\end{itemize}
+\bigskip
+The actions that are available through the client:
+\begin{itemize}
+  \item You can select the number of processes to be started.
+  \item Connect and receive work from the server.
+  \item Updating the population of the genetic algorithm from the server.
+\end{itemize}
+\bigskip
+All of the functionalities from above are used to implement a parallel genetic algorithm for the traveling salesman problem.
