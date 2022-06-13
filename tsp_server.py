@@ -18,7 +18,7 @@ import numpy as np
 from qtui.MainWindow import Ui_MainWindow
 import qtui.SwitchInstance
 
-BENCHMARK_MODE = True
+BENCHMARK_MODE = False
 BENCHMARK_TIME = 60
 BENCHMARK_RUNS = 5
 
@@ -55,9 +55,9 @@ class GeneticAlgorithmThread(Thread):
         self.Chromosome_Size = None
         self.Coordinates = None
         self.Population_Size = 500
-        self.Mutation_Probability = 0.12
-        self.Crossover_Probability = 0.33
-        self.Elite_Percent = 0.10
+        self.Mutation_Probability = 0.33
+        self.Crossover_Probability = 0.44
+        self.Elite_Percent = 0.05
         self.Method = True
         self.Selection_Probability = 0.6
         self.Migration_Percent = 0.15
