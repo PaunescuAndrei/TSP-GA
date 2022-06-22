@@ -113,7 +113,17 @@ You can choose your population size based on the number of genes in your individ
 \par
 A low mutation probability will give better results quickly, but it may lead to premature convergence in a local optimum, while a high probability will lead to a slow convergence speed.
 \par
-The crossover probability is pretty similar to the mutation probability, but I observed that usually higher values perform better.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/mutation.png}
+\caption{Mutation Probability Comparison}
+\end{figure}
+The crossover probability is pretty similar to the mutation probability. A high probability will lead to slower convergence and values too low will lead to worse results.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/crossover.png}
+\caption{Crossover Probability Comparison}
+\end{figure}
 \par
 For the elite percentage, you don't want values too big because in a few generations your entire population will be formed from the same individuals and the same applies to the migration chance. If you use a larger value, the algorithm will converge to a local optimum faster.
 \newpage
@@ -129,7 +139,7 @@ Each process generates its own initial population, then each process goes throug
 With the implementation of migration, we add another method of affecting the population. The introduction of new individuals will help prevent convergence in a local optimum. During migration, we select some of the best individuals from other processes and replace some of the worst ones from the current process with a migration probability chance. The migration probability chance is critical because it allows us to control the migration's selective pressure. If it is too high, it will lead to faster convergence into a local optimum, and if it is too low, it will lead to fewer individuals migrating and will result in a slower convergence.
 \newpage
 \subsection{Migration Model}
-For our algorithm, we implemented the Island Model. In this model, processes are allowed to share their individuals with any other process, as illustrated in Figure 2.3. There are no restrictions on where an individual may migrate. This model allows more freedom at the cost of more communication overhead and delay.
+For our algorithm, we implemented the Island Model. In this model, processes are allowed to share their individuals with any other process, as illustrated in Figure 2.5. There are no restrictions on where an individual may migrate. This model allows more freedom at the cost of more communication overhead and delay.
 \begin{figure}[ht]
 \includegraphics[width=0.6\textwidth]{images/island_model.png}
 \caption{Island Model}
