@@ -47,7 +47,7 @@ In crossover, we select multiple pairs of individuals with a crossover probabili
 \par
 Since we are working with permutations, we can't use the normal two point crossover operator because if we simply switch the genes between two parents, we will have duplicate cities.
 \par
-To solve this problem, we implemented Partially Mapped Crossover. After choosing two random cut points on parents to build offspring, the portion between cut points, one parent’s genes are mapped onto the other parent’s genes, and the remaining information is exchanged.
+We used Partially Mapped Crossover to solve this issue. To build new offspring, we select two random cut points on the parents. Then we take the portion between the cut points and map it onto the other parent, and the rest of the information is exchanged.
 \newline
 Example:
 \newline
@@ -67,7 +67,7 @@ $C_{1} = (3\:4\:X\:|\:1\:6\:8\:|\:X\:5)$
 \newline
 $C_{2} = (4\:X\:5\:|\:2\:7\:1\:|\:3\:X)$
 \newline
-Then, the first X in the first child is 8, which comes from the first parent, but 8 is already in this child, so we check mapping $1 \leftrightarrow 8$ and see again 1 existing in this child. Again, we check mapping $2\leftrightarrow 1$, so 2 occupies the first X. Similarly, the second X in the first child is 6, which comes from the first parent, but 6 exists in this child. We check mapping $7 \leftrightarrow 6$ as well, so 7 occupies the second. From these results, child 1 is:
+Then, we look for the first X in the first child. In the original parent, it's 8, but 8 is already in this child, so we check the mapping $1 \leftrightarrow 8$ and see again that 1 exists in this child, so we continue checking the next mapping $2\leftrightarrow 1$. 2 isn't anywhere in the first child, so it is valid for the first X. We do the same for the second X. The first option is 6, but 6 already exists, so we check mapping $7 \leftrightarrow 6$, 7 has no conflict, so it occupies the second X. From these results, child 1 is:
 \newline
 $C_{1} = (3\:4\:2\:|\:1\:6\:8\:|\:7\:5)$
 \newline

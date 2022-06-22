@@ -20,7 +20,7 @@ import qtui.SwitchInstance
 
 BENCHMARK_MODE = False
 BENCHMARK_TIME = 60
-BENCHMARK_RUNS = 5
+BENCHMARK_RUNS = 10
 
 def extract_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -55,12 +55,12 @@ class GeneticAlgorithmThread(Thread):
         self.Chromosome_Size = None
         self.Coordinates = None
         self.Population_Size = 500
-        self.Mutation_Probability = 0.33
-        self.Crossover_Probability = 0.44
-        self.Elite_Percent = 0.05
+        self.Mutation_Probability = 0.2
+        self.Crossover_Probability = 0.6
+        self.Elite_Percent = 0.01
         self.Method = True
         self.Selection_Probability = 0.6
-        self.Migration_Percent = 0.15
+        self.Migration_Percent = 0.05
         self.File = "data\\berlin52.tsp"
         #dj38.tsp 6656
         #berlin52.tsp 7542
@@ -69,7 +69,7 @@ class GeneticAlgorithmThread(Thread):
         #eil105.tsp 629
         self.Best = None
         self.Optimal_Solution = 7542
-        self.mydict = {}
+        self.eval_cache = {}
         self.workQueue = queue.LifoQueue()
         self.running = False
         self.starttime = None
@@ -117,21 +117,21 @@ class GeneticAlgorithmThread(Thread):
         random.shuffle(Chromosome)
         return Chromosome
 
-    def Evaluate_pair(self,pair,coordinates,mydict):
+    def Evaluate_pair(self,pair,coordinates,eval_cache):
         a,b = pair
-        if (a,b) in mydict:
-            return mydict[(a,b)]
+        if (a,b) in eval_cache:
+            return eval_cache[(a,b)]
         else:
             newcost = round(math.sqrt(((coordinates[a][0]-coordinates[b][0])) ** 2 + (coordinates[a][1]-coordinates[b][1]) ** 2 ))
-            mydict[(a,b)] = newcost
+            eval_cache[(a,b)] = newcost
             return newcost
 
-    def Evaluate(self,Chromosome,coordinates,mydict):
+    def Evaluate(self,Chromosome,coordinates,eval_cache):
         n = len(Chromosome)
         cost=0
         for i in range(n)[1:]:
-            cost += self.Evaluate_pair((Chromosome[i-1],Chromosome[i]),coordinates,mydict)
-        cost += self.Evaluate_pair((Chromosome[n-1],Chromosome[0]),coordinates,mydict)
+            cost += self.Evaluate_pair((Chromosome[i-1],Chromosome[i]),coordinates,eval_cache)
+        cost += self.Evaluate_pair((Chromosome[n-1],Chromosome[0]),coordinates,eval_cache)
         return cost
     
 
@@ -141,10 +141,10 @@ class GeneticAlgorithmThread(Thread):
             Population.append(self.Generate_Chromosome(Chromosome_Size))
         return Population
 
-    def BestSoFar(self,Population,Coordinates,mydict):
+    def BestSoFar(self,Population,Coordinates,eval_cache):
         BestSol = Population[0]
         for Solution in Population[1:]:
-            if self.Evaluate(Solution,Coordinates,mydict) < self.Evaluate(BestSol,Coordinates,mydict):
+            if self.Evaluate(Solution,Coordinates,eval_cache) < self.Evaluate(BestSol,Coordinates,eval_cache):
                 BestSol = Solution
         return BestSol
 
@@ -153,7 +153,7 @@ class GeneticAlgorithmThread(Thread):
         eval_list_old = []
 
         for Chromosome in self.Population:
-            eval_list_old.append(self.Evaluate(Chromosome,self.Coordinates,self.mydict))
+            eval_list_old.append(self.Evaluate(Chromosome,self.Coordinates,self.eval_cache))
 
         eval_max_old = max(eval_list_old)
             
@@ -161,7 +161,7 @@ class GeneticAlgorithmThread(Thread):
             eval_list_old[value] = eval_max_old-eval_list_old[value] + 1
 
         for Chromosome in newPopulation:
-            eval_list.append(self.Evaluate(Chromosome,self.Coordinates,self.mydict))
+            eval_list.append(self.Evaluate(Chromosome,self.Coordinates,self.eval_cache))
 
         eval_max = max(eval_list)
             
@@ -198,16 +198,16 @@ class GeneticAlgorithmThread(Thread):
     def run(self):
         self.Chromosome_Size,self.Coordinates = self.read_data(self.File)
         self.Population = self.Generate_Population(self.Population_Size*4, self.Chromosome_Size)
-        self.Best = self.BestSoFar(self.Population,self.Coordinates,self.mydict).copy()
+        self.Best = self.BestSoFar(self.Population,self.Coordinates,self.eval_cache).copy()
 
         while (True and not self.stopsig.is_set()):
             if(self.newfile):
                 self.File = self.newfile
                 self.Optimal_Solution = self.newoptim
-                self.mydict.clear()
+                self.eval_cache.clear()
                 self.Chromosome_Size,self.Coordinates = self.read_data(self.File)
                 self.Population = self.Generate_Population(self.Population_Size*4, self.Chromosome_Size)
-                self.Best = self.BestSoFar(self.Population,self.Coordinates,self.mydict).copy()
+                self.Best = self.BestSoFar(self.Population,self.Coordinates,self.eval_cache).copy()
                 self.App.mainWindow.updateFile()
                 self.newfile = None
                 self.newoptim = None
@@ -215,10 +215,10 @@ class GeneticAlgorithmThread(Thread):
                 msgdata,ip = self.workQueue.get()
                 msg,id,tspfile,pop,instance_date = msgdata 
                 if(tspfile == self.File and instance_date == self.instance_date):
-                    bestpop = self.BestSoFar(pop,self.Coordinates,self.mydict).copy()
-                    bestpop_value = self.Evaluate(bestpop,self.Coordinates,self.mydict)
+                    bestpop = self.BestSoFar(pop,self.Coordinates,self.eval_cache).copy()
+                    bestpop_value = self.Evaluate(bestpop,self.Coordinates,self.eval_cache)
                     self.updatePopulation(pop,id,ip[0])
-                    if bestpop_value < self.Evaluate(self.Best,self.Coordinates,self.mydict):
+                    if bestpop_value < self.Evaluate(self.Best,self.Coordinates,self.eval_cache):
                         self.Best = bestpop.copy()
                         if bestpop_value == self.Optimal_Solution:
                             self.stop_ga()
@@ -402,7 +402,7 @@ class MainWindow(QMainWindow,Ui_MainWindow):
     def updateGraph(self):
         if self.App.GA.Best:
             if(self.oldBest != self.App.GA.Best):
-                val = self.App.GA.Evaluate(self.App.GA.Best,self.App.GA.Coordinates,self.App.GA.mydict)
+                val = self.App.GA.Evaluate(self.App.GA.Best,self.App.GA.Coordinates,self.App.GA.eval_cache)
                 self.current_best_value.setText(str(val))
                 if(not BENCHMARK_MODE):
                     if self.plotitems:

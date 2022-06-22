@@ -23,9 +23,10 @@ The actions that are available through the client:
 
 \section{Technologies used}
 \subsection{Python}
-Python\footnote{Python \url{https://www.python.org}} is an interpreted, interactive, object-oriented programming language. It incorporates modules, exceptions, dynamic typing, very high level dynamic data types, and classes.
+Python\footnote{Python \url{https://www.python.org}} is an object-oriented, interpreted programming language.
+Modules, exceptions, dynamic typing, very high level dynamic data types, and classes are all included.
 \par
-I chose the Python programming language because of its versatility, efficiency, reliability, and extensive support libraries. It is also portable across operating systems. 
+I chose the Python programming language because of its versatility, efficiency, reliability, and extensive support libraries. It is also portable across operating systems.
 \par
 One of the main concerns and disadvantages of using Python is the Global Interpreter Lock (GIL). GIL is a mutex (or a lock) that allows only one thread to hold control of the Python interpreter. This will make our parallel algorithm redundant when run on a single system. I overcame the limitation of the GIL by using multiple processes instead of threads.
 \subsection{Package Installer for Python (PIP)}
@@ -167,5 +168,7 @@ From the second point it results that there is a relation between the number of 
  1 Process & 8550\\
 4 Processes & 8254\\
  12 Processes & 8065\\
+ \hline
+ Optimal Solution & 7542\\
  \end{longtable}
 Because genetic algorithms are metaheurisitc and use some form of stochastic optimization, they do not guarantee that a globally optimal solution can be found. Because of this, we cannot easily calculate the speedup achieved by a parallel algorithm. But from the results in Table 3.1 and Figure 3.3, we can conclude that there is an increase in performance with the increase in the number of processes.
